@@ -16,7 +16,7 @@ int main(){
     string input;
 
     cout << "Enter your customer number: ";
-    getline(cin,input)
+    getline(cin,input);
 
     cout << "\nValidating..." << endl;
 
