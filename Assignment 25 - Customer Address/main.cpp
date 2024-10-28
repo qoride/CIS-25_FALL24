@@ -87,9 +87,53 @@ int main(){
         if(accepted == true)break;
     }
 
-    cout << "\nID: " << user.ID
+    cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    cin.clear();
+
+    cout << "\nEnter your address's street: ";
+
+    getline(cin,input);
+    user.address.street = input;
+
+    cout << "\nEnter your address's city: ";
+
+    getline(cin,input);
+    user.address.city = input;
+
+    cout << "\nEnter your address's ZIP code: ";
+    user.address.zip = -1;
+
+    while(user.address.zip == -1){
+        while(cin >> val){
+            if(cin.good()){
+                if(val >= 100000 || val < 10000){
+                    cout << "\nERROR: ZIP code was not accepted, try again: ";
+                }else{
+                    user.address.zip = val;
+                }
+                break;
+            }
+        }
+        if(cin.fail()){
+            cin.clear();
+            cout << "\nERROR: ZIP code was not accepted, try again: ";
+            cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+            cin.clear();
+        }
+        if(user.address.zip != -1)break;
+    }
+
+    cin.ignore(std::numeric_limits<std::streamsize>::max(),'\n');
+    cin.clear();
+
+    cout << "\n=CUSTOMER="
+    << "\nID: " << user.ID
     << "\nName: " << user.name
-    << "\nE-mail: " << user.email << endl;
+    << "\nE-mail: " << user.email
+    << "\n\n=ADDRESS="
+    << "\nStreet: " << user.address.street
+    << "\nCity: " << user.address.city
+    << "\nZIP code: " << user.address.zip << endl;
 
     return 0;
 }
