@@ -1,5 +1,6 @@
 #include <iostream>
 #include <limits>
+#include "struct.hpp"
 
 using namespace std;
 

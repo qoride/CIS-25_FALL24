@@ -20,26 +20,25 @@ struct Date{
     }
 
     int DaysInMonth(){
-        return 30 + (month==2)?((LeapYear())?-1:-2):(month%2);
+        return 30 + ((month==2)?((LeapYear())?-1:-2):(month%2));
     }
 
     int Decode(){
-        Date days;
-        days.day = day;
-        days.month = month;
-        days.year = year;
+        Date numDays;
+        numDays.day = day;
+        numDays.month = month;
+        numDays.year = year;
 
-        while(days.month > 2){
-            days.day += days.DaysInMonth();
-            days.month--;
+        while(numDays.year > 1582){
+            while(numDays.month > 0){
+                numDays.day += numDays.DaysInMonth();
+                numDays.month--;
+            }
+            numDays.year--;
+            numDays.month = 12;
         }
 
-        while(days.year > 1582){
-            days.day += (days.LeapYear())?366:365;
-            days.year--;
-        }
-
-        return days.day;
+        return numDays.day;
     }
 
     int DaysDifference(Date otherDate){
@@ -49,8 +48,19 @@ struct Date{
     Date Encode(int days){
         Date newDate;
         newDate.year = 1582;
-        newDate.month = 1;
-        newDate.day = 1;
+        newDate.month = 12;
+        newDate.day = days-1;
+
+        while(newDate.day > newDate.DaysInMonth()+1){
+            newDate.day -= newDate.DaysInMonth();
+            newDate.month++;
+            if(newDate.month > 12){
+                newDate.year++;
+                newDate.month -= 12;
+            }
+        }
+
+        return newDate;
     }
 
     Date operator +(int days){
@@ -124,7 +134,7 @@ struct Book{
         if(borrowers.size() == copies)return "No more copies left.";
         borrowers.push_back(customer);
         customer.borrowDate = date;
-        return customer.name + " has borrowed " + title + " on " + date.Print() + ".\nPlease return it by " + std::to_string(policy.rentDays) + " days.";
+        return customer.name + " has borrowed " + title + " on " + date.Print() + ".\nPlease return it by " + (date+policy.rentDays).Print();
     }
 
     std::string Return(Person customer, Date date, Policy policy){
@@ -152,6 +162,11 @@ struct Book{
         for(Person p : borrowers){
             list += "\n" + p.name + ", " + p.borrowDate.Print();
         }
+        return list;
+    }
+
+    bool operator ==(Book other){
+        return (ISBN == other.ISBN && title == other.title);
     }
 };
 
