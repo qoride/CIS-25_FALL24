@@ -15,6 +15,11 @@ struct Date{
         return months[month-1] + " " + std::to_string(day) + ", " + std::to_string(year);
     }
 
+    friend std::ostream& operator <<(std::ostream& out, const Date &d){
+        out << months[d.month-1] << " " << d.day << ", " << d.year;
+        return out;
+    }
+
     bool LeapYear(){
         return ((year%4==0&&year%100!=100)||(year%400==0));
     }
@@ -113,12 +118,18 @@ struct Date{
 
 struct Policy{
     int rentDays;
-    float feeDaily;
+    double feeDaily;
 };
 
 struct Person{
     std::string name;
     Date borrowDate;
+
+    friend std::ostream& operator <<(std::ostream& out, const Person &p){
+        out << "Full name: " << p.name << std::endl;
+        if(p.borrowDate.year != 0)out << "Borrow date: " << p.borrowDate << std::endl;
+        return out;
+    }
 };
 
 struct Book{
@@ -157,16 +168,25 @@ struct Book{
         }
     }
 
-    std::string ListBorrowers(){
-        std::string list = "";
-        for(Person p : borrowers){
-            list += "\n" + p.name + ", " + p.borrowDate.Print();
-        }
-        return list;
+    bool operator ==(Book other){
+        return ISBN == other.ISBN;
     }
 
-    bool operator ==(Book other){
-        return (ISBN == other.ISBN && title == other.title);
+    friend std::ostream& operator <<(std::ostream& out, const Book &b){
+        out << "Title: " << b.title << std::endl
+        << "Author: " << b.author.name << std::endl
+        << "Published: " << b.publishDate << std::endl;
+
+        return out;
+    }
+
+    std::string fullInfo(){
+        return "Title: " + title
+        + "\nISBN: " + std::to_string(ISBN)
+        + "\nAuthor: " + author.name
+        + "\nPublished: " + publishDate.Print()
+        + "\nPages: " + std::to_string(pages)
+        + "\nCopies: " + std::to_string(copies-borrowers.size()) + " available out of " + std::to_string(copies) + " copies\n";
     }
 };
 
