@@ -35,6 +35,7 @@ const string OptionToString(Option option){
         case yesOption:         return "Y";
         case noOption:          return "N";
         case invalidOption:     return "invalid";
+        default:                return "unknown";
     }
 }
 
@@ -57,7 +58,7 @@ const map<string, Option> menuMap = {
 
 int validNum(string msg, vector<int> data, bool (*condition)(vector<int>), string errormsg);
 string validStr(string msg, string data, vector<string> accepted, string errormsg);
-Book validBook(string &data, vector<Book> list);
+Book validBook(string &data, vector<Book> &list);
 void clearStream(string msg = "");
 void bufferStream();
 Option parseIn(string s);
@@ -74,7 +75,7 @@ bool valEquals(vector<int> args);
 
 int main(){
     string input;
-    int val, temp;
+    int val, tempVal;
     bool valid = false;
     vector<Book> catalogue;
     Policy policy = {30,1.00};
@@ -117,11 +118,11 @@ int main(){
                         bookPtr = nullptr;
                         break;
                     }else{
-                        temp = validNum("\nEnter the number of copies you're adding: ",
+                        tempVal = validNum("\nEnter the number of copies you're adding: ",
                         {val, 0}, greaterThan, "\nERROR: Number is invalid, please try again: ");
 
-                        catalogue.at(findBook(newBook, catalogue, true)).copies += temp;
-                        cout << "\nAdded " << temp << " copies to " << catalogue.at(findBook(newBook, catalogue, true)).title << endl << endl;
+                        catalogue.at(findBook(newBook, catalogue, true)).copies += tempVal;
+                        cout << "\nAdded " << tempVal << " copies to " << catalogue.at(findBook(newBook, catalogue, true)).title << endl << endl;
                         delete bookPtr;
                         bookPtr = nullptr;
                         bufferStream();
@@ -139,7 +140,7 @@ int main(){
                 newBook.author.name = input;
 
                 newBook.publishDate.year = validNum("\nEnter the year the book was published: ",
-                {val, 0}, greaterThan, "\nERROR: Year is invalid, please try again: ");
+                {val, 1582}, greaterThan, "\nERROR: Year is invalid, please try again: ");
 
                 newBook.publishDate.month = validNum("\nEnter the month the book was published: ",
                 {val, 0, 13}, clampVal, "\nERROR: Month is invalid, please try again: ");
@@ -175,11 +176,88 @@ int main(){
                 break;}
             
             case removeBook:{
-
+                Book temp = validBook(input,catalogue);
+                val = findBook(temp, catalogue, true);
+                tempVal = 0;
+                if(temp.ISBN != -1){
+                    if(catalogue[val].copies > 0){
+                        tempVal = validNum("\nEnter the number of copies you are removing: ",
+                        {val, 0}, greaterThan, "\nERROR: Number is invalid, please try again: ");
+                        catalogue[val].copies -= tempVal;
+                    }
+                    if(catalogue[val].copies < catalogue[val].borrowers.size()){
+                        input = validStr("\nThis action will remove copies from current borrowers, do you want to continue? [Y/N] ",
+                        input, {"Y","N"}, "\nERROR: Invalid option, please try again: ");
+                        if(input == "Y"){
+                            if(catalogue[val].copies < 1){
+                                cout << "\nRemoved all copies of " << temp.title << "." << endl;
+                                catalogue[val].borrowers.clear();
+                                catalogue[val].copies = 0;
+                                input = validStr("\nThere are 0 copies left, remove book from catalogue? [Y/N] ",
+                                input, {"Y","N"}, "\nERROR: Invalid option, please try again: ");
+                                if(input == "Y"){
+                                    cout << endl << catalogue[val].title << " has been removed from the catalogue." << endl;
+                                    catalogue.erase(catalogue.begin()+val);
+                                }
+                            }else{
+                                cout << "\nRemoved " << tempVal << " copies of " << catalogue[val].title << endl;
+                                do{
+                                    cout << catalogue[val].borrowers[0].name << "'s copy was removed free of charge." << endl;
+                                    catalogue[val].borrowers.erase(temp.borrowers.begin());
+                                    
+                                }while(catalogue[val].borrowers.size() > catalogue[val].copies);
+                            }
+                        }else{
+                            cout << "\nReturning to main menu..." << endl;
+                            break;
+                        }
+                    }else{
+                        if(catalogue[val].copies < 1){
+                            if(tempVal > 0)cout << "\nRemoved all copies of " << catalogue[val].title << "." << endl;
+                            catalogue[val].borrowers.clear();
+                            catalogue[val].copies = 0;
+                            input = validStr("\nThere are 0 copies left, remove book from catalogue? [Y/N] ",
+                            input, {"Y","N"}, "\nERROR: Invalid option, please try again: ");
+                            if(input == "Y"){
+                                cout << endl << catalogue[val].title << " has been removed from the catalogue.\n" << endl;
+                                catalogue.erase(catalogue.begin()+findBook(catalogue[val],catalogue,true));
+                            }
+                        }else{
+                            cout << "\nRemoved " << tempVal << " copies of " << catalogue[val].title << ".\n" << endl;
+                        }
+                    }
+                }
+                bufferStream();
                 break;}
 
             case borrowBook:{
+                Book temp = validBook(input,catalogue);
+                Date d;
+                Person p;
+                val = findBook(temp, catalogue, true);
+                if(temp.ISBN != -1){
+                    clearStream();
+                    if(catalogue[val].copies == catalogue[val].borrowers.size()){
+                        cout << "\nNo more copies available.\n" << endl;
+                    }else{
+                        d.year = validNum("\nEnter the year of today's date: ",
+                        {val, 1582}, greaterThan, "\nERROR: Year is invalid, please try again: ");
 
+                        d.month = validNum("\nEnter the month of today's date: ",
+                        {val, 0, 13}, clampVal, "\nERROR: Month is invalid, please try again: ");
+
+                        d.day = validNum("\nEnter the day of today's date: ",
+                        {val, 0, d.DaysInMonth()+1}, clampVal, "\nERROR: Day is invalid, please try again: ");
+
+                        clearStream();
+                        cout << "\nPlease enter the name of the customer: ";
+                        getline(cin, input);
+                        p.name = input;
+
+                        cout << catalogue[val].CheckOut(p, d, policy);
+                    }
+                }
+                bufferStream();
                 break;}
 
             case returnBook:{
@@ -272,7 +350,7 @@ string validStr(string msg, string data, vector<string> accepted, string errorms
     }while(true);
 }
 
-Book validBook(string &data, vector<Book> list){
+Book validBook(string &data, vector<Book> &list){
     clearStream();
     int duplicates = -1;
     Book* bookPtr = new Book;

@@ -142,10 +142,9 @@ struct Book{
     Date publishDate;
 
     std::string CheckOut(Person &customer, Date date, Policy policy){
-        if(borrowers.size() == copies)return "No more copies left.";
         borrowers.push_back(customer);
         customer.borrowDate = date;
-        return customer.name + " has borrowed " + title + " on " + date.Print() + ".\nPlease return it by " + (date+policy.rentDays).Print();
+        return "\n" + customer.name + " has borrowed " + title + " on " + date.Print() + ".\nPlease return it by " + (date+policy.rentDays).Print() + "\n";
     }
 
     std::string Return(Person customer, Date date, Policy policy){
